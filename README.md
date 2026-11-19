@@ -1,8 +1,13 @@
-# Arka Mondal — Portfolio
+# Arka Mondal — Portfolio ("The Proof")
 
-🌐 **Live Portfolio:** [Visit My Portfolio](https://arkamondal.vercel.app)
+A React + Vite portfolio styled as a mathematician's notebook.
 
-A responsive React + Vite portfolio with a professional dark navy / emerald visual system.
+- **Light / Dark themes** (light and dark), remembered in localStorage and following the system setting on first visit
+- **Fig. 1** — an interactive Fourier-series square wave drawn with rotating circles (hero)
+- Sections framed as a proof: Definition, Lemmas (projects), Axioms (skills), Q.E.D. (contact)
+- Stacking project cards, graph-paper background, sine-wave intro (plays on every load/refresh, click to skip)
+- Fonts are self-hosted via `@fontsource` (no external requests)
+- Respects `prefers-reduced-motion`
 
 ## Run locally
 
@@ -17,12 +22,14 @@ npm run dev
 npm run build
 ```
 
-## Resume
+## Structure
 
-Place the current resume at `public/resume.pdf`. The portfolio serves that file but downloads it as `Arka-Mondal-Resume.pdf`.
+- `src/data.js` — projects, skills, contact links (edit content here)
+- `src/App.jsx` — page layout
+- `src/components/` — `FourierFigure`, `Loader`
+- `src/App.css` — all styling and theme tokens
 
-## Before deploying
+## Notes
 
-- Replace conceptual project preview illustrations with screenshots of your actual project UIs when available.
-- Verify each repository link and project status.
-- Update the skill list as your implementation experience grows.
+- Resume: keep the current PDF at `public/resume.pdf`.
+- Project previews are illustrative concepts with sample numbers; swap in real screenshots when available.
