@@ -9,6 +9,18 @@ export const sections = [
 export const projects = [
   {
     id: "01",
+    title: "InsightIndia",
+    type: "ANALYTICS / BUSINESS INTELLIGENCE",
+    summary: "Turning data into meaningful insights and smarter decisions.",
+    description:
+      "An end-to-end data analytics portfolio featuring five projects across e-commerce, road safety, government finance, marketing experiments, and business intelligence. It combines data cleaning, exploratory analysis, SQL querying, statistical methods, and interactive dashboards to uncover trends and communicate actionable insights.",
+    stack: ["Python", "SQL", "Pandas", "NumPy", "Plotly", "Streamlit", "SQLite", "Power BI", "Tableau"],
+    href: "https://github.com/arka829636/InsightIndia",
+    kind: "insight",
+    status: "Analytics project",
+  },
+  {
+    id: "02",
     title: "SupplyShield",
     type: "DATA ANALYTICS / SUPPLY CHAIN",
     summary: "Making procurement data easier to understand—and supplier performance easier to act on.",
@@ -20,7 +32,7 @@ export const projects = [
     status: "Analytics project",
   },
   {
-    id: "02",
+    id: "03",
     title: "Finlytic AI",
     type: "FINTECH / PERSONAL FINANCE",
     summary: "A clearer picture of personal spending, one transaction at a time.",
@@ -32,7 +44,7 @@ export const projects = [
     status: "Application project",
   },
   {
-    id: "03",
+    id: "04",
     title: "ConsultIQ",
     type: "AI / DECISION SUPPORT",
     summary: "Exploring how AI could help teams ask better business questions.",

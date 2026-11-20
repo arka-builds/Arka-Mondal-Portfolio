@@ -16,6 +16,22 @@ function Scribble() {
 }
 
 function ProjectVisual({ kind }) {
+  if (kind === "insight") {
+    const domains = ["E-COMMERCE", "ROAD SAFETY", "GOVT FINANCE", "MARKETING A/B", "BI DASHBOARD"];
+    return (
+      <div className="viz viz-insight">
+        <div className="viz-top"><span>INSIGHTINDIA / 5 DOMAINS</span><span className="pulse">LIVE VIEW</span></div>
+        <div className="viz-insight-list">
+          {domains.map((name, i) => (
+            <div key={name} style={{ "--w": `${[88, 64, 76, 52, 94][i]}%`, "--d": `${i * 90}ms` }}>
+              <small>{name}</small><i />
+            </div>
+          ))}
+        </div>
+        <div className="viz-foot">DATA → INSIGHT → DECISION</div>
+      </div>
+    );
+  }
   if (kind === "supply") {
     const bars = [35, 57, 42, 78, 61, 94, 72, 100, 68, 84, 54, 89];
     return (
@@ -72,6 +88,21 @@ function App() {
   const [theme, setTheme] = React.useState(() => document.documentElement.dataset.theme || "light");
   const navRef = React.useRef(null);
   const progressRef = React.useRef(null);
+  const [proj, setProjRaw] = React.useState(0);
+  const [projShown, setProjShown] = React.useState(false);
+  const [projDir, setProjDir] = React.useState(1);
+  const tabsRef = React.useRef(null);
+  const touchX = React.useRef(null);
+  const [tabPill, setTabPill] = React.useState({ left: 0, width: 0, ready: false });
+  // Change project; `dir` decides which way the card slides.
+  const projRef = React.useRef(0);
+  const goProj = React.useCallback((next, dir) => {
+    const n = projects.length;
+    const target = ((next % n) + n) % n;
+    setProjDir(dir ?? (target >= projRef.current ? 1 : -1));
+    projRef.current = target;
+    setProjRaw(target);
+  }, []);
   const navLock = React.useRef({ locked: false, timer: 0 });
   const [pill, setPill] = React.useState({ left: 0, top: 0, width: 0, height: 0, ready: false });
 
@@ -135,6 +166,51 @@ function App() {
     window.addEventListener("resize", move);
     return () => window.removeEventListener("resize", move);
   }, [active, menuOpen]);
+
+  // Project viewer: restart the preview animations whenever the selected project changes.
+  React.useEffect(() => {
+    setProjShown(false);
+    let r2 = 0;
+    const r1 = requestAnimationFrame(() => { r2 = requestAnimationFrame(() => setProjShown(true)); });
+    return () => { cancelAnimationFrame(r1); cancelAnimationFrame(r2); };
+  }, [proj]);
+
+  const onProjKey = (e) => {
+    if (e.key === "ArrowRight") { e.preventDefault(); goProj(proj + 1, 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); goProj(proj - 1, -1); }
+  };
+
+  // Sliding highlight behind the active project tab (and keep it scrolled into view on phones).
+  React.useLayoutEffect(() => {
+    const move = () => {
+      const tab = tabsRef.current?.querySelector(".proj-tab.active");
+      if (!tab) return;
+      setTabPill({ left: tab.offsetLeft, width: tab.offsetWidth, ready: true });
+      const box = tabsRef.current;
+      if (box.scrollWidth > box.clientWidth) box.scrollTo({ left: tab.offsetLeft - (box.clientWidth - tab.offsetWidth) / 2, behavior: reduced() ? "auto" : "smooth" });
+    };
+    move();
+    window.addEventListener("resize", move);
+    return () => window.removeEventListener("resize", move);
+  }, [proj]);
+
+  const onTouchStart = (e) => { touchX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e) => {
+    if (touchX.current == null) return;
+    const dx = e.changedTouches[0].clientX - touchX.current;
+    touchX.current = null;
+    if (Math.abs(dx) > 50) goProj(proj + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+  };
+  // Preview card follows the pointer in 3D.
+  const tilt = (e) => {
+    if (reduced()) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    e.currentTarget.style.setProperty("--ry", `${(x * 12).toFixed(2)}deg`);
+    e.currentTarget.style.setProperty("--rx", `${(-y * 10).toFixed(2)}deg`);
+  };
+  const untilt = (e) => { e.currentTarget.style.setProperty("--ry", "0deg"); e.currentTarget.style.setProperty("--rx", "0deg"); };
 
   // Reveal-on-scroll.
   React.useEffect(() => {
@@ -311,25 +387,44 @@ function App() {
               <p>Projects are where I connect the dots between what I learn and problems worth solving.</p>
             </header>
 
-            <div className="lemmas">
-              {projects.map((p, i) => (
-                <article className={`lemma tone-${p.kind}`} key={p.id} style={{ "--i": i }} data-reveal>
-                  <div className="lemma-copy">
-                    <div className="lemma-label"><span>LEMMA {i + 1}</span><span>{p.status}</span></div>
-                    <h3>{p.title}</h3>
-                    <p className="lemma-type">{p.type}</p>
-                    <p className="lemma-summary">{p.summary}</p>
-                    <p className="lemma-desc">{p.description}</p>
-                    <ul className="tags">{p.stack.map((s) => <li key={s}>{s}</li>)}</ul>
-                    <a className="btn-line" href={p.href} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a>
-                  </div>
-                  <a className="lemma-art" href={p.href} target="_blank" rel="noreferrer" aria-label={`View ${p.title} on GitHub`}>
-                    <div className="art-meta"><span>{p.id} / 03</span><span>ILLUSTRATIVE PREVIEW</span></div>
-                    <ProjectVisual kind={p.kind} />
-                    <span className="art-open">OPEN PROJECT ↗</span>
-                  </a>
-                </article>
-              ))}
+            <div className="lemmas" data-reveal onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+              <div className="proj-bar">
+                <div className="proj-tabs" ref={tabsRef} role="tablist" aria-label="Projects" onKeyDown={onProjKey}>
+                  <span className={`proj-pill${tabPill.ready ? " is-ready" : ""}`} aria-hidden="true" style={{ left: tabPill.left, width: tabPill.width }} />
+                  {projects.map((p, i) => (
+                    <button key={p.id} type="button" role="tab" id={`proj-tab-${i}`} aria-selected={proj === i} aria-controls="proj-panel" tabIndex={proj === i ? 0 : -1} className={proj === i ? "proj-tab active" : "proj-tab"} onClick={() => goProj(i)}>
+                      <b>{p.id}</b><span>{p.title}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="proj-nav">
+                  <button type="button" onClick={() => goProj(proj - 1, -1)} aria-label="Previous project">←</button>
+                  <span>{String(proj + 1).padStart(2, "0")} / {String(projects.length).padStart(2, "0")}</span>
+                  <button type="button" onClick={() => goProj(proj + 1, 1)} aria-label="Next project">→</button>
+                </div>
+              </div>
+
+              {(() => {
+                const p = projects[proj];
+                return (
+                  <article className={`lemma tone-${p.kind}${projShown ? " in" : ""}`} key={p.id} id="proj-panel" role="tabpanel" style={{ "--dir": projDir }} aria-labelledby={`proj-tab-${proj}`}>
+                    <div className="lemma-copy">
+                      <div className="lemma-label"><span>LEMMA {proj + 1}</span><span>{p.status}</span></div>
+                      <h3>{p.title}</h3>
+                      <p className="lemma-type">{p.type}</p>
+                      <p className="lemma-summary">{p.summary}</p>
+                      <p className="lemma-desc">{p.description}</p>
+                      <ul className="tags">{p.stack.map((s) => <li key={s}>{s}</li>)}</ul>
+                      <a className="btn-line" href={p.href} target="_blank" rel="noreferrer">Explore repository <span>↗</span></a>
+                    </div>
+                    <a className="lemma-art" onMouseMove={tilt} onMouseLeave={untilt} href={p.href} target="_blank" rel="noreferrer" aria-label={`View ${p.title} on GitHub`}>
+                      <div className="art-meta"><span>{p.id} / {String(projects.length).padStart(2, "0")}</span><span>ILLUSTRATIVE PREVIEW</span></div>
+                      <ProjectVisual kind={p.kind} />
+                      <span className="art-open">OPEN PROJECT ↗</span>
+                    </a>
+                  </article>
+                );
+              })()}
             </div>
             <p className="fine">Previews are illustrative concepts, not screenshots. Numbers shown are sample values.</p>
           </section>
